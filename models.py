@@ -66,20 +66,67 @@ class Movable(Entity,GraphicObject):
         self.vx = 0
         self.vy = 0
         self.state = MovingState.ACTIVE
+
+    def _handle_collisions(self):
+        for neighbor in self.game.get_neighborhood((self.grid_x,self.grid_y)):
+            if neighbor.grid_x == self.grid_x:
+                if (
+                    self.physical_y - neighbor.physical_y < 1 and 
+                    self.physical_y - neighbor.physical_y >= 0):
+                    self._handle_downward_collision(neighbor)
+                elif (
+                    self.physical_y - neighbor.physical_y > -1 and 
+                    self.physical_y - neighbor.physical_y <= 0):
+                    self._handle_upward_collision(neighbor)
+            elif neighbor.grid_y == self.grid_y:
+                if (
+                    self.physical_x - neighbor.physical_x < 1 and 
+                    self.physical_x - neighbor.physical_x >= 0):
+                    self._handle_right_collision(neighbor)
+                elif (
+                    self.physical_x - neighbor.physical_x > -1 and 
+                    self.physical_x - neighbor.physical_x <= 0):
+                    self._handle_left_collision(neighbor)
+
+    def _handle_downward_collision(self,neighbor):
+        if neighbor.get_type() == EntityType.WALL:
+            self.vy = 0
+            self._snap_to_grid(True)
+
+    def _handle_upward_collision(self,neighbor):
+        if neighbor.get_type() == EntityType.WALL:
+            self.vy = 0
+            self._snap_to_grid(True)
+
+    def _handle_right_collision(self,neighbor):
+        if neighbor.get_type() == EntityType.WALL:
+            self.vx = 0
+            self._snap_to_grid(False)
+
+    def _handle_left_collision(self,neighbor):
+        if neighbor.get_type() == EntityType.WALL:
+            self.vx = 0
+            self._snap_to_grid(False)
+
     def _snap_to_grid(self,vertical):
         if vertical:
-            self.physical_y = self.grid_y
+            self.physical_y = self.grid_y + 0.5
         else:
-            self.physical_x = self.grid_x
+            self.physical_x = self.grid_x + 0.5
+
     def update(self,delta_time):
         self._update_position(delta_time)
         self._update_speed(delta_time)
         self._update_grid()
+        self._handle_collisions()
+
     def _update_position(self,delta_time):
         self.physical_x += self.vx * delta_time
         self.physical_y += self.vy * delta_time
-    def _update_speed(self,delta_time):
-        pass
+
+    def _update_speed(self, delta_time):
+        self.vy += GRAVITY * delta_time
+
     def _update_grid(self):
         new_x,new_y = int(self.physical_x),int(self.physical_y)
         if (
@@ -91,10 +138,13 @@ class Movable(Entity,GraphicObject):
                 (new_x,new_y))
             self.grid_x = new_x
             self.grid_y = new_y
+
     def move_right(self):
         raise NotImplementedError('Movable should implement move_right')
+
     def move_left(self):
         raise NotImplementedError('Movable should implement move_left')
+
     def stand_still(self):
         self.vx = 0
 
@@ -107,14 +157,21 @@ class Monster(Movable):
             MovingState.MOVING_LEFT : load_sprite('monster',(GRID_SIZE,GRID_SIZE)),
             MovingState.SLEEPING : load_sprite('monster_sleeping',(GRID_SIZE,GRID_SIZE)),
         }
+
     def get_current_sprite(self):
         return self.sprites[self.state]
+
     def move_right(self):
         self.vx = MONSTER_SPEED
+
     def move_left(self):
         self.vx = -MONSTER_SPEED
 
+    def get_type(self):
+        return EntityType.MONSTER
+
 class Player(Movable):
+
     def __init__(self,grid_position,game):
         Movable.__init__(self,grid_position,game)
         self.sprites = {
@@ -122,22 +179,10 @@ class Player(Movable):
             MovingState.MOVING_RIGHT : load_sprite('player_moving_right',(GRID_SIZE,GRID_SIZE)),
             MovingState.MOVING_LEFT : load_sprite('player_moving_left',(GRID_SIZE,GRID_SIZE)),
         }
+
     def get_current_sprite(self):
         return self.sprites[self.state]
     
-    def _update_speed(self, delta_time):
-        if self._on_solid_ground():
-            return
-        self.vy += GRAVITY * delta_time
-    
-    def _on_solid_ground(self):
-        x,y = self.grid_x,self.grid_y
-        lower_neighbor = self.game.get_entity((x,y+1))
-        if lower_neighbor and lower_neighbor.physical_y - self.physical_y < 1:
-            self.physical_y = self.grid_y + .5
-            return True
-        return False
-
     def move_right(self):
         self.vx = PLAYER_SPEED
         self.state = MovingState.MOVING_RIGHT
@@ -145,5 +190,13 @@ class Player(Movable):
     def move_left(self):
         self.vx = -PLAYER_SPEED
         self.state = MovingState.MOVING_LEFT
+    
+    def stand_still(self):
+        self.state = MovingState.ACTIVE
+        return super().stand_still()
+
     def jump(self):
         self.vy = PLAYER_VERTICAL_SPEED
+
+    def get_type(self):
+        return EntityType.PLAYER

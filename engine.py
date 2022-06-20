@@ -52,9 +52,9 @@ class Game:
                         self.monsters.append(self.grid[x,y])
                     x += 1
                 y += 1
-                self.grid_width = x-1
+                self.grid_width = x
                 x = 0
-            self.grid_height = y
+            self.grid_height = y+1
 
     def _update(self):
         delta_time = self.clock.tick() / 1000
@@ -79,7 +79,7 @@ class Game:
                     self._handle_command(Commands.MOVE_RIGHT)
                 elif event.key == pygame.K_LEFT:
                     self._handle_command(Commands.MOVE_LEFT)
-                elif event.key == pygame.K_SPACE:
+                elif event.key == pygame.K_UP:
                     self._handle_command(Commands.JUMP)
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_RIGHT:
@@ -112,6 +112,14 @@ class Game:
         if grid_position in self.grid:
             return self.grid[grid_position]
         return None
+
+    def get_neighborhood(self,grid_position):
+        x,y = grid_position
+        for dx,dy in [
+            (1,0),(1,1),(0,1),(-1,1),
+            (-1,0),(-1,-1),(0,-1),(1,-1)]:
+            if (x+dx,y+dy) in self.grid:
+                yield self.grid[x+dx,y+dy]
 
     def update_grid(self,old_position,new_position):
         """
