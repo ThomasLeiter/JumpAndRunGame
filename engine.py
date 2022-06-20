@@ -22,6 +22,7 @@ class Game:
 
     def _init_entities(self):
         self.grid = {}
+        self.entities = {}
         self.player = None
         self.monsters = []
         self._load_level()
@@ -41,15 +42,23 @@ class Game:
             for row in f:
                 for col in row:
                     if col == 'X':
-                        self.grid[x,y] = Wall((x,y),self)
+                        entity = Wall((x,y),self)
+                        self.entities[entity.get_id()] = entity
+                        self.grid[x,y] = {entity.get_id()}
                     elif col == 'U':
-                        self.grid[x,y] = Powerup((x,y),self)
+                        entity = Powerup((x,y),self)
+                        self.entities[entity.get_id()] = entity
+                        self.grid[x,y] = {entity.get_id()}
                     elif col == 'P':
-                        self.grid[x,y] = Player((x,y),self)
-                        self.player = self.grid[x,y]
+                        entity = Player((x,y),self)
+                        self.entities[entity.get_id()] = entity
+                        self.grid[x,y] = {entity.get_id()}
+                        self.player = entity
                     elif col == 'M':
-                        self.grid[x,y] = Monster((x,y),self)
-                        self.monsters.append(self.grid[x,y])
+                        entity = Monster((x,y),self)
+                        self.entities[entity.get_id()] = entity
+                        self.grid[x,y] = {entity.get_id()}
+                        self.monsters.append(entity)
                     x += 1
                 y += 1
                 self.grid_width = x
@@ -89,11 +98,11 @@ class Game:
 
     def _draw(self):
         self.screen.blit(self.back_ground,(0,0))
-        for x,y in self.grid:
-            entity = self.grid[x,y]
+        for id in self.entities:
+            entity = self.entities[id]
             _x = entity.physical_x * GRID_SIZE
             _y = entity.physical_y * GRID_SIZE
-            sprite = self.grid[x,y].get_current_sprite()
+            sprite = entity.get_current_sprite()
             self.screen.blit(sprite,(_x,_y))
         pygame.display.flip()
 
@@ -110,7 +119,8 @@ class Game:
 
     def get_entity(self,grid_position):
         if grid_position in self.grid:
-            return self.grid[grid_position]
+            for id in self.grid[grid_position]:
+                yield id 
         return None
 
     def get_neighborhood(self,grid_position):
@@ -119,11 +129,16 @@ class Game:
             (1,0),(1,1),(0,1),(-1,1),
             (-1,0),(-1,-1),(0,-1),(1,-1)]:
             if (x+dx,y+dy) in self.grid:
-                yield self.grid[x+dx,y+dy]
+                for id in self.grid[x+dx,y+dy]:
+                    yield self.entities[id]
 
-    def update_grid(self,old_position,new_position):
+    def update_grid(self,entity,old_position,new_position):
         """
         Move entity from old_position to new_position.
         """
-        self.grid[new_position] = self.grid[old_position]
-        del self.grid[old_position]
+        if not new_position in self.grid:
+            self.grid[new_position] = set()
+        self.grid[new_position].add(entity.get_id())
+        self.grid[old_position] -= {entity.get_id()}
+        if not self.grid[old_position]:
+            del self.grid[old_position]

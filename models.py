@@ -2,6 +2,8 @@ from enum import Enum
 import pygame
 from os.path import join
 
+from sympy import Id
+
 def load_sprite(sprite_name,size):
     path = join('assets','sprites',f'{sprite_name}.png')
     sprite = pygame.image.load(path)
@@ -34,11 +36,18 @@ PLAYER_SPEED = 3
 MONSTER_SPEED = 3
 
 class Entity:
+    ID = 0
     def __init__(self,grid_position,game):
+        self.id = Entity.ID
+        Entity.ID += 1
         self.grid_x,self.grid_y = grid_position
         self.physical_x = self.grid_x + .5
         self.physical_y = self.grid_y + .5
         self.game = game
+
+    def get_id(self):
+        return self.id
+
     def get_type(self):
         raise NotImplementedError('Entities should implement get_type method')
 
@@ -134,6 +143,7 @@ class Movable(Entity,GraphicObject):
             new_y != self.grid_y
             ):
             self.game.update_grid(
+                self,
                 (self.grid_x,self.grid_y),
                 (new_x,new_y))
             self.grid_x = new_x
