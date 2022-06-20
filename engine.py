@@ -8,9 +8,9 @@ from models import GRID_SIZE
 from models import load_sprite
 
 class Commands(Enum):
-    STAND_STILL = 0,
-    MOVE_RIGHT = 1,
-    MOVE_LEFT = 2,
+    STAND_STILL = 0
+    MOVE_RIGHT = 1
+    MOVE_LEFT = 2
     JUMP = 3
 
 class Game:
