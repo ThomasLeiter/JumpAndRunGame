@@ -210,3 +210,23 @@ class Player(Movable):
 
     def get_type(self):
         return EntityType.PLAYER
+
+    def _handle_right_collision(self,neighbor):
+        super()._handle_right_collision(self,neighbor)
+        if neighbor.get_type() == EntityType.MONSTER:
+            raise NotImplementedError('Horizontal collision with monster detected')
+
+    def _handle_left_collision(self,neighbor):
+        super()._handle_left_collision(self,neighbor)
+        if neighbor.get_type() == EntityType.MONSTER:
+            raise NotImplementedError('Horizontal collision with monster detected')
+
+    def _handle_downward_collision(self,neighbor):
+        super()._handle_downward_collision(self,neighbor)
+        if neighbor.get_type() == EntityType.MONSTER:
+            raise NotImplementedError('Deactivate Monster')
+
+    def _handle_upward_collision(self,neighbor):
+        super()._handle_upward_collision(self,neighbor)
+        if neighbor.get_type() == EntityType.MONSTER:
+            raise NotImplementedError('Vertical collision with Monster detected')
