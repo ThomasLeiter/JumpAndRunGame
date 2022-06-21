@@ -1,8 +1,7 @@
 from enum import Enum
 import pygame
 from os.path import join
-
-from sympy import Id
+from constants_and_states import GameState
 
 def load_sprite(sprite_name,size):
     path = join('assets','sprites',f'{sprite_name}.png')
@@ -23,6 +22,7 @@ class EntityType(Enum):
     POWERUP = 'U'
     MONSTER = 'M'
     PLAYER = 'P'
+    TREASURE = 'T'
 
 class MovingState(Enum):
     ACTIVE = 0
@@ -69,6 +69,15 @@ class Powerup(Entity,GraphicObject):
     def get_type(self):
         return EntityType.POWERUP
 
+class Treasure(Entity,GraphicObject):
+    def __init__(self,grid_position,game):
+        Entity.__init__(self,grid_position,game)
+        self.sprite = load_sprite('treasure',(GRID_SIZE,GRID_SIZE))
+    def get_current_sprite(self):
+        return self.sprite        
+    def get_type(self):
+        return EntityType.TREASURE
+
 class Movable(Entity,GraphicObject):
     def __init__(self,grid_position,game):
         Entity.__init__(self,grid_position,game)
@@ -82,11 +91,11 @@ class Movable(Entity,GraphicObject):
                 if (
                     self.physical_y - neighbor.physical_y < 1 and 
                     self.physical_y - neighbor.physical_y >= 0):
-                    self._handle_downward_collision(neighbor)
+                    self._handle_upward_collision(neighbor)
                 elif (
                     self.physical_y - neighbor.physical_y > -1 and 
                     self.physical_y - neighbor.physical_y <= 0):
-                    self._handle_upward_collision(neighbor)
+                    self._handle_downward_collision(neighbor)
             elif neighbor.grid_y == self.grid_y:
                 if (
                     self.physical_x - neighbor.physical_x < 1 and 
@@ -212,21 +221,35 @@ class Player(Movable):
         return EntityType.PLAYER
 
     def _handle_right_collision(self,neighbor):
-        super()._handle_right_collision(self,neighbor)
-        if neighbor.get_type() == EntityType.MONSTER:
-            raise NotImplementedError('Horizontal collision with monster detected')
+        Movable._handle_right_collision(self,neighbor)
+        if (
+            neighbor.get_type() == EntityType.MONSTER and 
+            neighbor.state != MovingState.SLEEPING):
+            self.game.set_game_state(GameState.IS_LOST)
+        elif neighbor.get_type() == EntityType.TREASURE:
+            self.game.set_game_state(GameState.IS_WON)
 
     def _handle_left_collision(self,neighbor):
-        super()._handle_left_collision(self,neighbor)
-        if neighbor.get_type() == EntityType.MONSTER:
-            raise NotImplementedError('Horizontal collision with monster detected')
+        Movable._handle_left_collision(self,neighbor)
+        if (
+            neighbor.get_type() == EntityType.MONSTER and 
+            neighbor.state != MovingState.SLEEPING):
+            self.game.set_game_state(GameState.IS_LOST)
+        elif neighbor.get_type() == EntityType.TREASURE:
+            self.game.set_game_state(GameState.IS_WON)
 
     def _handle_downward_collision(self,neighbor):
-        super()._handle_downward_collision(self,neighbor)
+        Movable._handle_downward_collision(self,neighbor)
         if neighbor.get_type() == EntityType.MONSTER:
-            raise NotImplementedError('Deactivate Monster')
+            neighbor.state = MovingState.SLEEPING
+        elif neighbor.get_type() == EntityType.TREASURE:
+            self.game.set_game_state(GameState.IS_WON)
 
     def _handle_upward_collision(self,neighbor):
-        super()._handle_upward_collision(self,neighbor)
-        if neighbor.get_type() == EntityType.MONSTER:
-            raise NotImplementedError('Vertical collision with Monster detected')
+        Movable._handle_upward_collision(self,neighbor)
+        if (
+            neighbor.get_type() == EntityType.MONSTER and 
+            neighbor.state != MovingState.SLEEPING):
+            self.game.set_game_state(GameState.IS_LOST)
+        elif neighbor.get_type() == EntityType.TREASURE:
+            self.game.set_game_state(GameState.IS_WON)

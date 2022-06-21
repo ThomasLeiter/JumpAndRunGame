@@ -1,17 +1,12 @@
 from pygame.time import Clock
-from enum import Enum
 from os.path import join
 import pygame
 
-from models import Wall,Powerup,Player,Monster
+from models import Wall,Powerup,Player,Monster,Treasure
 from models import GRID_SIZE
 from models import load_sprite
 
-class Commands(Enum):
-    STAND_STILL = 0
-    MOVE_RIGHT = 1
-    MOVE_LEFT = 2
-    JUMP = 3
+from constants_and_states import GameState, Commands
 
 class Game:
     def __init__(self,level_name):
@@ -19,6 +14,7 @@ class Game:
         self.clock = Clock()
         self._init_entities()
         self._init_graphics()
+        self.game_state = GameState.IN_PROGRESS
 
     def _init_entities(self):
         self.grid = {}
@@ -49,6 +45,10 @@ class Game:
                         entity = Powerup((x,y),self)
                         self.entities[entity.get_id()] = entity
                         self.grid[x,y] = {entity.get_id()}
+                    elif col == 'T':
+                        entity = Treasure((x,y),self)
+                        self.entities[entity.get_id()] = entity
+                        self.grid[x,y] = {entity.get_id()}
                     elif col == 'P':
                         entity = Player((x,y),self)
                         self.entities[entity.get_id()] = entity
@@ -74,7 +74,8 @@ class Game:
     def main_loop(self):
         while True:
             self._handle_inputs()
-            self._update()
+            if self.game_state == GameState.IN_PROGRESS:
+                self._update()
             self._draw()
 
     def _handle_inputs(self):
@@ -107,7 +108,6 @@ class Game:
         pygame.display.flip()
 
     def _handle_command(self,command):
-        print(f'Handling {command}')
         if command == Commands.STAND_STILL:
             self.player.stand_still()
         elif command == Commands.MOVE_RIGHT:
@@ -142,3 +142,6 @@ class Game:
         self.grid[old_position] -= {entity.get_id()}
         if not self.grid[old_position]:
             del self.grid[old_position]
+    
+    def set_game_state(self,game_state):
+        self.game_state = game_state
