@@ -1,30 +1,13 @@
-from enum import Enum
-from constants_and_states import GameState, GRID_SIZE
+from constants_and_states import GameState, EntityType, MovingState, GRID_SIZE
+from constants_and_states import GRID_SIZE, GRAVITY
+from constants_and_states import PLAYER_SPEED, PLAYER_VERTICAL_SPEED, MONSTER_SPEED
+
 from utility import load_sprite
 
 
 class GraphicObject:
     def get_current_sprite(self):
         raise NotImplementedError('Graphic objects should return a sprite.')
-
-
-class EntityType(Enum):
-    WALL = 'X'
-    POWERUP = 'U'
-    MONSTER = 'M'
-    PLAYER = 'P'
-    TREASURE = 'T'
-
-class MovingState(Enum):
-    ACTIVE = 0
-    MOVING_RIGHT = 1
-    MOVING_LEFT = 2
-    SLEEPING = 3
-    
-GRAVITY = 10
-PLAYER_VERTICAL_SPEED = -10
-PLAYER_SPEED = 3
-MONSTER_SPEED = 3
 
 class Entity:
     ID = 0
@@ -189,16 +172,23 @@ class Player(Movable):
             MovingState.MOVING_RIGHT : load_sprite('player_moving_right',(GRID_SIZE,GRID_SIZE)),
             MovingState.MOVING_LEFT : load_sprite('player_moving_left',(GRID_SIZE,GRID_SIZE)),
         }
+        self.has_powerup = False
 
     def get_current_sprite(self):
         return self.sprites[self.state]
     
     def move_right(self):
-        self.vx = PLAYER_SPEED
+        if self.has_powerup:
+            self.vx = 2 * PLAYER_SPEED    
+        else:
+            self.vx = PLAYER_SPEED
         self.state = MovingState.MOVING_RIGHT
     
     def move_left(self):
-        self.vx = -PLAYER_SPEED
+        if self.has_powerup:
+            self.vx = -2 * PLAYER_SPEED    
+        else:
+            self.vx = -PLAYER_SPEED
         self.state = MovingState.MOVING_LEFT
     
     def stand_still(self):
@@ -217,8 +207,8 @@ class Player(Movable):
             neighbor.get_type() == EntityType.MONSTER and 
             neighbor.state != MovingState.SLEEPING):
             self.game.set_game_state(GameState.IS_LOST)
-        elif neighbor.get_type() == EntityType.TREASURE:
-            self.game.set_game_state(GameState.IS_WON)
+        else:
+            self._handle_normal_collision(neighbor)
 
     def _handle_left_collision(self,neighbor):
         Movable._handle_left_collision(self,neighbor)
@@ -226,15 +216,15 @@ class Player(Movable):
             neighbor.get_type() == EntityType.MONSTER and 
             neighbor.state != MovingState.SLEEPING):
             self.game.set_game_state(GameState.IS_LOST)
-        elif neighbor.get_type() == EntityType.TREASURE:
-            self.game.set_game_state(GameState.IS_WON)
+        else:
+            self._handle_normal_collision(neighbor)
 
     def _handle_downward_collision(self,neighbor):
         Movable._handle_downward_collision(self,neighbor)
         if neighbor.get_type() == EntityType.MONSTER:
             neighbor.state = MovingState.SLEEPING
-        elif neighbor.get_type() == EntityType.TREASURE:
-            self.game.set_game_state(GameState.IS_WON)
+        else:
+            self._handle_normal_collision(neighbor)
 
     def _handle_upward_collision(self,neighbor):
         Movable._handle_upward_collision(self,neighbor)
@@ -242,5 +232,11 @@ class Player(Movable):
             neighbor.get_type() == EntityType.MONSTER and 
             neighbor.state != MovingState.SLEEPING):
             self.game.set_game_state(GameState.IS_LOST)
-        elif neighbor.get_type() == EntityType.TREASURE:
+        else:
+            self._handle_normal_collision(neighbor)
+
+    def _handle_normal_collision(self,neighbor):
+        if neighbor.get_type() == EntityType.TREASURE:
             self.game.set_game_state(GameState.IS_WON)
+        elif neighbor.get_type() == EntityType.POWERUP:
+            self.has_powerup = True
