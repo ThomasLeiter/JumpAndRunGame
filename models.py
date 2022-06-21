@@ -6,10 +6,28 @@ from utility import load_sprite
 
 
 class GraphicObject:
+    """
+    Abstract class to represent a GraphicObject
+
+    Methods:
+    ---------
+    get_current_sprite : Surface
+        Return the active sprite of the graphic object
+    """
     def get_current_sprite(self):
         raise NotImplementedError('Graphic objects should return a sprite.')
 
 class Entity:
+    """
+    Abstract class to represent a logical game entity.
+
+    Methods:
+    ---------
+    get_id : int
+        Return the unique ID of the entity
+    get_type : EntityType
+        Return the type of the entity
+    """
     ID = 0
     def __init__(self,grid_position,game):
         self.id = Entity.ID
@@ -37,9 +55,12 @@ class Wall(Entity,GraphicObject):
 class Powerup(Entity,GraphicObject):
     def __init__(self,grid_position,game):
         Entity.__init__(self,grid_position,game)
-        self.sprite = load_sprite('powerup_green',(GRID_SIZE,GRID_SIZE))
+        self.sprites = {
+            False: load_sprite('powerup_green',(GRID_SIZE,GRID_SIZE)),
+            True: load_sprite('invisible',(GRID_SIZE,GRID_SIZE))}
+        self.is_used = False
     def get_current_sprite(self):
-        return self.sprite        
+        return self.sprites[self.is_used]       
     def get_type(self):
         return EntityType.POWERUP
 
@@ -53,6 +74,14 @@ class Treasure(Entity,GraphicObject):
         return EntityType.TREASURE
 
 class Movable(Entity,GraphicObject):
+    """
+    Abstract class to represent a movable entity
+
+    Methods:
+    ---------
+    update(delta_time) : int -> None
+        Update position and state based on elapsed time in seconds
+    """
     def __init__(self,grid_position,game):
         Entity.__init__(self,grid_position,game)
         self.vx = 0
@@ -240,3 +269,4 @@ class Player(Movable):
             self.game.set_game_state(GameState.IS_WON)
         elif neighbor.get_type() == EntityType.POWERUP:
             self.has_powerup = True
+            neighbor.is_used = True
