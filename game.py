@@ -1,8 +1,9 @@
+from html import entities
 from pygame.time import Clock
 from os.path import join
 import pygame
 
-from models import Wall,Powerup,Player,Monster,Treasure
+from models import Wall,SpeedPowerup,Player,Monster,Treasure
 
 from utility import load_sprite, load_font, text_output
 
@@ -43,7 +44,7 @@ class Game:
                         self.entities[entity.get_id()] = entity
                         self.grid[x,y] = {entity.get_id()}
                     elif col == 'U':
-                        entity = Powerup((x,y),self)
+                        entity = SpeedPowerup((x,y),self)
                         self.entities[entity.get_id()] = entity
                         self.grid[x,y] = {entity.get_id()}
                     elif col == 'T':
@@ -125,8 +126,7 @@ class Game:
     def get_entity(self,grid_position):
         if grid_position in self.grid:
             for id in self.grid[grid_position]:
-                yield id 
-        return None
+                yield self.entities[id] 
 
     def get_neighborhood(self,grid_position):
         x,y = grid_position

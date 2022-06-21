@@ -1,3 +1,4 @@
+from numpy import power
 from constants_and_states import GameState, EntityType, MovingState, GRID_SIZE
 from constants_and_states import GRID_SIZE, GRAVITY
 from constants_and_states import PLAYER_SPEED, PLAYER_VERTICAL_SPEED, MONSTER_SPEED
@@ -59,10 +60,19 @@ class Powerup(Entity,GraphicObject):
             False: load_sprite('powerup_green',(GRID_SIZE,GRID_SIZE)),
             True: load_sprite('invisible',(GRID_SIZE,GRID_SIZE))}
         self.is_used = False
+
     def get_current_sprite(self):
         return self.sprites[self.is_used]       
+
     def get_type(self):
         return EntityType.POWERUP
+
+    def apply(self,player):
+        raise NotImplementedError('Powerups should implement apply method')
+
+class SpeedPowerup(Powerup):
+    def apply(self,player):
+        player.speed = 2*PLAYER_SPEED
 
 class Treasure(Entity,GraphicObject):
     def __init__(self,grid_position,game):
@@ -201,23 +211,18 @@ class Player(Movable):
             MovingState.MOVING_RIGHT : load_sprite('player_moving_right',(GRID_SIZE,GRID_SIZE)),
             MovingState.MOVING_LEFT : load_sprite('player_moving_left',(GRID_SIZE,GRID_SIZE)),
         }
-        self.has_powerup = False
+        self.powerups = []
+        self.speed = PLAYER_SPEED
 
     def get_current_sprite(self):
         return self.sprites[self.state]
     
     def move_right(self):
-        if self.has_powerup:
-            self.vx = 2 * PLAYER_SPEED    
-        else:
-            self.vx = PLAYER_SPEED
+        self.vx = self.speed
         self.state = MovingState.MOVING_RIGHT
     
     def move_left(self):
-        if self.has_powerup:
-            self.vx = -2 * PLAYER_SPEED    
-        else:
-            self.vx = -PLAYER_SPEED
+        self.vx = -self.speed
         self.state = MovingState.MOVING_LEFT
     
     def stand_still(self):
@@ -225,10 +230,18 @@ class Player(Movable):
         return super().stand_still()
 
     def jump(self):
-        self.vy = PLAYER_VERTICAL_SPEED
+        for entity in self.game.get_entity(
+            (self.grid_x,self.grid_y+1)):
+            if entity.get_type() == EntityType.WALL:
+                self.vy = PLAYER_VERTICAL_SPEED
 
     def get_type(self):
         return EntityType.PLAYER
+
+    def update(self,delta_time):
+        for powerup in self.powerups:
+            powerup.apply(self)
+        Movable.update(self,delta_time)
 
     def _handle_right_collision(self,neighbor):
         Movable._handle_right_collision(self,neighbor)
@@ -267,6 +280,8 @@ class Player(Movable):
     def _handle_normal_collision(self,neighbor):
         if neighbor.get_type() == EntityType.TREASURE:
             self.game.set_game_state(GameState.IS_WON)
-        elif neighbor.get_type() == EntityType.POWERUP:
-            self.has_powerup = True
+        elif (
+            neighbor.get_type() == EntityType.POWERUP and 
+            not neighbor.is_used):
+            self.powerups.append(neighbor)
             neighbor.is_used = True
