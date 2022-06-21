@@ -1,10 +1,8 @@
-from numpy import power
-from constants_and_states import GameState, EntityType, MovingState, GRID_SIZE
+from constants_and_states import GameState, EntityType, MovingState
 from constants_and_states import GRID_SIZE, GRAVITY
 from constants_and_states import PLAYER_SPEED, PLAYER_VERTICAL_SPEED, MONSTER_SPEED
 
 from utility import load_sprite
-
 
 class GraphicObject:
     """
