@@ -62,7 +62,7 @@ class Game:
                         self.monsters.append(entity)
                     x += 1
                 y += 1
-                self.grid_width = x
+                self.grid_width = x+1
                 x = 0
             self.grid_height = y+1
 
