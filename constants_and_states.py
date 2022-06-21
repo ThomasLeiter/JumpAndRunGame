@@ -1,5 +1,8 @@
 from enum import Enum
 
+GRID_SIZE = 40
+
+
 class GameState(Enum):
     IN_PROGRESS = 0
     IS_WON = 1

@@ -3,10 +3,10 @@ from os.path import join
 import pygame
 
 from models import Wall,Powerup,Player,Monster,Treasure
-from models import GRID_SIZE
-from models import load_sprite
 
-from constants_and_states import GameState, Commands
+from utility import load_sprite
+
+from constants_and_states import GameState, Commands, GRID_SIZE
 
 class Game:
     def __init__(self,level_name):

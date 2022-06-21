@@ -1,16 +1,7 @@
 from enum import Enum
-import pygame
-from os.path import join
-from constants_and_states import GameState
+from constants_and_states import GameState, GRID_SIZE
+from utility import load_sprite
 
-def load_sprite(sprite_name,size):
-    path = join('assets','sprites',f'{sprite_name}.png')
-    sprite = pygame.image.load(path)
-    sprite = pygame.transform.scale(sprite,size)
-    sprite.set_colorkey((255,255,255))
-    return sprite
-
-GRID_SIZE = 40
 
 class GraphicObject:
     def get_current_sprite(self):

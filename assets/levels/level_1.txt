@@ -1,7 +1,8 @@
 XXXXXXXXXXXXXXXXXXXX
-X                  X
-X   U     M        X
-X        XXXXX     X
+X   U              X
+X                 TX
+X         M     XXXX
+X        XXXX      X
 X       M          X
 X     XXXXX        X
 X                  X
