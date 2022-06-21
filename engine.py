@@ -4,7 +4,7 @@ import pygame
 
 from models import Wall,Powerup,Player,Monster,Treasure
 
-from utility import load_sprite
+from utility import load_sprite, load_font, text_output
 
 from constants_and_states import GameState, Commands, GRID_SIZE
 
@@ -28,6 +28,7 @@ class Game:
         self.back_ground = load_sprite('background',screen_size)
         self.screen = pygame.display.set_mode(screen_size)
         pygame.display.set_caption(f'JumpAndRun level {self.level_name}')
+        self.font = load_font()
 
     def _load_level(self):
         path = join('assets','levels',f'level_{self.level_name}.txt')
@@ -105,6 +106,10 @@ class Game:
             _y = entity.physical_y * GRID_SIZE
             sprite = entity.get_current_sprite()
             self.screen.blit(sprite,(_x,_y))
+        if self.game_state == GameState.IS_WON:
+            text_output('YOU WIN',self.font,self.screen,(0,255,0))
+        elif self.game_state == GameState.IS_LOST:
+            text_output('YOU LOSE',self.font,self.screen,(255,0,0))
         pygame.display.flip()
 
     def _handle_command(self,command):
