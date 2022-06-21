@@ -189,15 +189,45 @@ class Monster(Movable):
             MovingState.MOVING_LEFT : load_sprite('monster',(GRID_SIZE,GRID_SIZE)),
             MovingState.SLEEPING : load_sprite('monster_sleeping',(GRID_SIZE,GRID_SIZE)),
         }
+        self.state = MovingState.ACTIVE
+        self.move_right()
+
+    def put_asleep(self):
+        self.stand_still()
+        self.state = MovingState.SLEEPING
+
+    def update(self,delta_time):
+        Movable.update(self,delta_time)
+        has_free_path = self._check_free_path()
+        if self.state == MovingState.MOVING_RIGHT and not has_free_path:
+            self.move_left()
+        elif self.state == MovingState.MOVING_LEFT and not has_free_path:
+            self.move_right()
+
+    def _check_free_path(self):
+        x,y = self.grid_x,self.grid_y
+        if self.state == MovingState.MOVING_RIGHT:
+            x += 1
+        elif self.state == MovingState.MOVING_LEFT:
+            x -= 1
+        for neighbor in self.game.get_entity((x,y)):
+            if neighbor.get_type() == EntityType.WALL:
+                return False
+        for neighbor in self.game.get_entity((x,y+1)):
+            if neighbor.get_type() == EntityType.WALL:
+                return True
+        return False        
 
     def get_current_sprite(self):
         return self.sprites[self.state]
 
     def move_right(self):
         self.vx = MONSTER_SPEED
+        self.state = MovingState.MOVING_RIGHT
 
     def move_left(self):
         self.vx = -MONSTER_SPEED
+        self.state = MovingState.MOVING_LEFT
 
     def get_type(self):
         return EntityType.MONSTER
@@ -264,7 +294,7 @@ class Player(Movable):
     def _handle_downward_collision(self,neighbor):
         Movable._handle_downward_collision(self,neighbor)
         if neighbor.get_type() == EntityType.MONSTER:
-            neighbor.state = MovingState.SLEEPING
+            neighbor.put_asleep()
         else:
             self._handle_normal_collision(neighbor)
 
