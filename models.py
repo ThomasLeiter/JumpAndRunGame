@@ -1,5 +1,5 @@
 from constants_and_states import GameState, EntityType, MovingState
-from constants_and_states import GRID_SIZE, GRAVITY
+from constants_and_states import GRID_SIZE, GRAVITY, COLLISION_DISTANCE
 from constants_and_states import PLAYER_SPEED, PLAYER_VERTICAL_SPEED, MONSTER_SPEED
 
 from utility import load_sprite
@@ -110,20 +110,20 @@ class Movable(Entity,GraphicObject):
         for neighbor in self._game.get_neighborhood(self.get_grid_position()):
             if neighbor._grid_x == self._grid_x:
                 if (
-                    self._physical_y - neighbor._physical_y < 1 and 
+                    self._physical_y - neighbor._physical_y < COLLISION_DISTANCE and 
                     self._physical_y - neighbor._physical_y >= 0):
                     self._handle_upward_collision(neighbor)
                 elif (
-                    self._physical_y - neighbor._physical_y > -1 and 
+                    self._physical_y - neighbor._physical_y > -COLLISION_DISTANCE and 
                     self._physical_y - neighbor._physical_y <= 0):
                     self._handle_downward_collision(neighbor)
             elif neighbor._grid_y == self._grid_y:
                 if (
-                    self._physical_x - neighbor._physical_x < 1 and 
+                    self._physical_x - neighbor._physical_x < COLLISION_DISTANCE and 
                     self._physical_x - neighbor._physical_x >= 0):
                     self._handle_right_collision(neighbor)
                 elif (
-                    self._physical_x - neighbor._physical_x > -1 and 
+                    self._physical_x - neighbor._physical_x > -COLLISION_DISTANCE and 
                     self._physical_x - neighbor._physical_x <= 0):
                     self._handle_left_collision(neighbor)
 
