@@ -1,4 +1,3 @@
-from html import entities
 from pygame.time import Clock
 from os.path import join
 import pygame
