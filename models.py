@@ -29,7 +29,7 @@ class Entity:
     """
     ID = 0
     def __init__(self,grid_position,game):
-        self.id = Entity.ID
+        self._id = Entity.ID
         Entity.ID += 1
         self.grid_x,self.grid_y = grid_position
         self.physical_x = self.grid_x + .5
@@ -37,7 +37,7 @@ class Entity:
         self.game = game
 
     def get_id(self):
-        return self.id
+        return self._id
 
     def get_type(self):
         raise NotImplementedError('Entities should implement get_type method')

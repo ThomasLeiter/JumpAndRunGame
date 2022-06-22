@@ -7,7 +7,7 @@ from models import Wall,SpeedPowerup,Player,Monster,Treasure
 
 from utility import load_sprite, load_font, text_output
 
-from constants_and_states import GameState, Commands, GRID_SIZE
+from constants_and_states import GameState, Commands, GRID_SIZE, MovingState
 
 class Game:
     def __init__(self,level_name):
@@ -25,16 +25,16 @@ class Game:
         self._load_level()
 
     def _init_graphics(self):
-        screen_size = (self.grid_width*GRID_SIZE,self.grid_height*GRID_SIZE)
-        self.back_ground = load_sprite('background',screen_size)
-        self.screen = pygame.display.set_mode(screen_size)
+        screen_size = (self._grid_width*GRID_SIZE,self._grid_height*GRID_SIZE)
+        self._back_ground = load_sprite('background',screen_size)
+        self._screen = pygame.display.set_mode(screen_size)
         pygame.display.set_caption(f'JumpAndRun level {self._level_name}')
-        self.font = load_font()
+        self._font = load_font()
 
     def _load_level(self):
         path = join('assets','levels',f'level_{self._level_name}.txt')
-        self.grid_width = 0
-        self.grid_height = 0
+        self._grid_width = 0
+        self._grid_height = 0
         with open(path,'r') as f:
             x,y = 0,0
             for row in f:
@@ -63,9 +63,9 @@ class Game:
                         self._monsters.append(entity)
                     x += 1
                 y += 1
-                self.grid_width = x+1
+                self._grid_width = x+1
                 x = 0
-            self.grid_height = y+1
+            self._grid_height = y+1
 
     def _update(self):
         delta_time = self._clock.tick() / 1000
@@ -94,23 +94,27 @@ class Game:
                 elif event.key == pygame.K_UP:
                     self._handle_command(Commands.JUMP)
             elif event.type == pygame.KEYUP:
-                if event.key == pygame.K_RIGHT:
+                if (
+                    event.key == pygame.K_RIGHT and 
+                    self._player.state == MovingState.MOVING_RIGHT):
                     self._handle_command(Commands.STAND_STILL)
-                elif event.key == pygame.K_LEFT:
+                elif (
+                    event.key == pygame.K_LEFT and 
+                    self._player.state == MovingState.MOVING_LEFT):
                     self._handle_command(Commands.STAND_STILL)
 
     def _draw(self):
-        self.screen.blit(self.back_ground,(0,0))
+        self._screen.blit(self._back_ground,(0,0))
         for id in self._entities:
             entity = self._entities[id]
             _x = entity.physical_x * GRID_SIZE
             _y = entity.physical_y * GRID_SIZE
             sprite = entity.get_current_sprite()
-            self.screen.blit(sprite,(_x,_y))
+            self._screen.blit(sprite,(_x,_y))
         if self._game_state == GameState.IS_WON:
-            text_output('YOU WIN',self.font,self.screen,(0,255,0))
+            text_output('YOU WIN',self._font,self._screen,(0,255,0))
         elif self._game_state == GameState.IS_LOST:
-            text_output('YOU LOSE',self.font,self.screen,(255,0,0))
+            text_output('YOU LOSE',self._font,self._screen,(255,0,0))
         pygame.display.flip()
 
     def _handle_command(self,command):
