@@ -38,7 +38,7 @@ class Entity:
         self._grid_x,self._grid_y = grid_position
         self._physical_x = self._grid_x + .5
         self._physical_y = self._grid_y + .5
-        self.game = game
+        self._game = game
 
     def get_id(self):
         return self._id
@@ -80,7 +80,7 @@ class Powerup(Entity,GraphicObject):
 
 class SpeedPowerup(Powerup):
     def apply(self,player):
-        player.speed = 2*PLAYER_SPEED
+        player._speed = 2*PLAYER_SPEED
 
 class Treasure(Entity,GraphicObject):
     def __init__(self,grid_position,game):
@@ -107,7 +107,7 @@ class Movable(Entity,GraphicObject):
         self.state = MovingState.ACTIVE
 
     def _handle_collisions(self):
-        for neighbor in self.game.get_neighborhood(self.get_grid_position()):
+        for neighbor in self._game.get_neighborhood(self.get_grid_position()):
             if neighbor._grid_x == self._grid_x:
                 if (
                     self._physical_y - neighbor._physical_y < 1 and 
@@ -172,7 +172,7 @@ class Movable(Entity,GraphicObject):
             new_x != self._grid_x or 
             new_y != self._grid_y
             ):
-            self.game.update_grid(
+            self._game.update_grid(
                 self,
                 (self._grid_x,self._grid_y),
                 (new_x,new_y))
@@ -218,10 +218,10 @@ class Monster(Movable):
             x += 1
         elif self.state == MovingState.MOVING_LEFT:
             x -= 1
-        for neighbor in self.game.get_entity((x,y)):
+        for neighbor in self._game.get_entity((x,y)):
             if neighbor.get_type() == EntityType.WALL:
                 return False
-        for neighbor in self.game.get_entity((x,y+1)):
+        for neighbor in self._game.get_entity((x,y+1)):
             if neighbor.get_type() == EntityType.WALL:
                 return True
         return False        
@@ -250,17 +250,17 @@ class Player(Movable):
             MovingState.MOVING_LEFT : load_sprite('player_moving_left',(GRID_SIZE,GRID_SIZE)),
         }
         self.powerups = []
-        self.speed = PLAYER_SPEED
+        self._speed = PLAYER_SPEED
 
     def get_current_sprite(self):
         return self.sprites[self.state]
     
     def move_right(self):
-        self.vx = self.speed
+        self.vx = self._speed
         self.state = MovingState.MOVING_RIGHT
     
     def move_left(self):
-        self.vx = -self.speed
+        self.vx = -self._speed
         self.state = MovingState.MOVING_LEFT
     
     def stand_still(self):
@@ -268,7 +268,7 @@ class Player(Movable):
         return super().stand_still()
 
     def jump(self):
-        for entity in self.game.get_entity(
+        for entity in self._game.get_entity(
             (self._grid_x,self._grid_y+1)):
             if entity.get_type() == EntityType.WALL:
                 self.vy = PLAYER_VERTICAL_SPEED
@@ -286,7 +286,7 @@ class Player(Movable):
         if (
             neighbor.get_type() == EntityType.MONSTER and 
             neighbor.state != MovingState.SLEEPING):
-            self.game.set_game_state(GameState.IS_LOST)
+            self._game.set_game_state(GameState.IS_LOST)
         else:
             self._handle_normal_collision(neighbor)
 
@@ -295,7 +295,7 @@ class Player(Movable):
         if (
             neighbor.get_type() == EntityType.MONSTER and 
             neighbor.state != MovingState.SLEEPING):
-            self.game.set_game_state(GameState.IS_LOST)
+            self._game.set_game_state(GameState.IS_LOST)
         else:
             self._handle_normal_collision(neighbor)
 
@@ -311,13 +311,13 @@ class Player(Movable):
         if (
             neighbor.get_type() == EntityType.MONSTER and 
             neighbor.state != MovingState.SLEEPING):
-            self.game.set_game_state(GameState.IS_LOST)
+            self._game.set_game_state(GameState.IS_LOST)
         else:
             self._handle_normal_collision(neighbor)
 
     def _handle_normal_collision(self,neighbor):
         if neighbor.get_type() == EntityType.TREASURE:
-            self.game.set_game_state(GameState.IS_WON)
+            self._game.set_game_state(GameState.IS_WON)
         elif (
             neighbor.get_type() == EntityType.POWERUP and 
             not neighbor.is_used):
