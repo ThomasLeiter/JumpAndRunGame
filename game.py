@@ -107,8 +107,8 @@ class Game:
         self._screen.blit(self._back_ground,(0,0))
         for id in self._entities:
             entity = self._entities[id]
-            _x = entity.physical_x * GRID_SIZE
-            _y = entity.physical_y * GRID_SIZE
+            _x,_y = entity.get_physical_position()
+            _x,_y = _x * GRID_SIZE, _y * GRID_SIZE
             sprite = entity.get_current_sprite()
             self._screen.blit(sprite,(_x,_y))
         if self._game_state == GameState.IS_WON:

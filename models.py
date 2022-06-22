@@ -26,18 +26,28 @@ class Entity:
         Return the unique ID of the entity
     get_type : EntityType
         Return the type of the entity
+    get_grid_position : (int,int)
+        Return the current grid position of the entity
+    get_physical_position : (float,float)
+        Return the current physical position of the entity
     """
     ID = 0
     def __init__(self,grid_position,game):
         self._id = Entity.ID
         Entity.ID += 1
-        self.grid_x,self.grid_y = grid_position
-        self.physical_x = self.grid_x + .5
-        self.physical_y = self.grid_y + .5
+        self._grid_x,self._grid_y = grid_position
+        self._physical_x = self._grid_x + .5
+        self._physical_y = self._grid_y + .5
         self.game = game
 
     def get_id(self):
         return self._id
+
+    def get_grid_position(self):
+        return (self._grid_x,self._grid_y)
+
+    def get_physical_position(self):
+        return (self._physical_x,self._physical_y)
 
     def get_type(self):
         raise NotImplementedError('Entities should implement get_type method')
@@ -45,9 +55,9 @@ class Entity:
 class Wall(Entity,GraphicObject):
     def __init__(self,grid_position,game):
         Entity.__init__(self,grid_position,game)
-        self.sprite = load_sprite('wall',(GRID_SIZE,GRID_SIZE))
+        self._sprite = load_sprite('wall',(GRID_SIZE,GRID_SIZE))
     def get_current_sprite(self):
-        return self.sprite        
+        return self._sprite        
     def get_type(self):
         return EntityType.WALL
 
@@ -97,24 +107,24 @@ class Movable(Entity,GraphicObject):
         self.state = MovingState.ACTIVE
 
     def _handle_collisions(self):
-        for neighbor in self.game.get_neighborhood((self.grid_x,self.grid_y)):
-            if neighbor.grid_x == self.grid_x:
+        for neighbor in self.game.get_neighborhood(self.get_grid_position()):
+            if neighbor._grid_x == self._grid_x:
                 if (
-                    self.physical_y - neighbor.physical_y < 1 and 
-                    self.physical_y - neighbor.physical_y >= 0):
+                    self._physical_y - neighbor._physical_y < 1 and 
+                    self._physical_y - neighbor._physical_y >= 0):
                     self._handle_upward_collision(neighbor)
                 elif (
-                    self.physical_y - neighbor.physical_y > -1 and 
-                    self.physical_y - neighbor.physical_y <= 0):
+                    self._physical_y - neighbor._physical_y > -1 and 
+                    self._physical_y - neighbor._physical_y <= 0):
                     self._handle_downward_collision(neighbor)
-            elif neighbor.grid_y == self.grid_y:
+            elif neighbor._grid_y == self._grid_y:
                 if (
-                    self.physical_x - neighbor.physical_x < 1 and 
-                    self.physical_x - neighbor.physical_x >= 0):
+                    self._physical_x - neighbor._physical_x < 1 and 
+                    self._physical_x - neighbor._physical_x >= 0):
                     self._handle_right_collision(neighbor)
                 elif (
-                    self.physical_x - neighbor.physical_x > -1 and 
-                    self.physical_x - neighbor.physical_x <= 0):
+                    self._physical_x - neighbor._physical_x > -1 and 
+                    self._physical_x - neighbor._physical_x <= 0):
                     self._handle_left_collision(neighbor)
 
     def _handle_downward_collision(self,neighbor):
@@ -139,9 +149,9 @@ class Movable(Entity,GraphicObject):
 
     def _snap_to_grid(self,vertical):
         if vertical:
-            self.physical_y = self.grid_y + 0.5
+            self._physical_y = self._grid_y + 0.5
         else:
-            self.physical_x = self.grid_x + 0.5
+            self._physical_x = self._grid_x + 0.5
 
     def update(self,delta_time):
         self._update_position(delta_time)
@@ -150,24 +160,24 @@ class Movable(Entity,GraphicObject):
         self._handle_collisions()
 
     def _update_position(self,delta_time):
-        self.physical_x += self.vx * delta_time
-        self.physical_y += self.vy * delta_time
+        self._physical_x += self.vx * delta_time
+        self._physical_y += self.vy * delta_time
 
     def _update_speed(self, delta_time):
         self.vy += GRAVITY * delta_time
 
     def _update_grid(self):
-        new_x,new_y = int(self.physical_x),int(self.physical_y)
+        new_x,new_y = int(self._physical_x),int(self._physical_y)
         if (
-            new_x != self.grid_x or 
-            new_y != self.grid_y
+            new_x != self._grid_x or 
+            new_y != self._grid_y
             ):
             self.game.update_grid(
                 self,
-                (self.grid_x,self.grid_y),
+                (self._grid_x,self._grid_y),
                 (new_x,new_y))
-            self.grid_x = new_x
-            self.grid_y = new_y
+            self._grid_x = new_x
+            self._grid_y = new_y
 
     def move_right(self):
         raise NotImplementedError('Movable should implement move_right')
@@ -203,7 +213,7 @@ class Monster(Movable):
             self.move_right()
 
     def _check_free_path(self):
-        x,y = self.grid_x,self.grid_y
+        x,y = self.get_grid_position()
         if self.state == MovingState.MOVING_RIGHT:
             x += 1
         elif self.state == MovingState.MOVING_LEFT:
@@ -259,7 +269,7 @@ class Player(Movable):
 
     def jump(self):
         for entity in self.game.get_entity(
-            (self.grid_x,self.grid_y+1)):
+            (self._grid_x,self._grid_y+1)):
             if entity.get_type() == EntityType.WALL:
                 self.vy = PLAYER_VERTICAL_SPEED
 
